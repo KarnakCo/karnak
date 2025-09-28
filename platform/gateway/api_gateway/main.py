@@ -1,12 +1,19 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 import logging
 
-# Inicializa o app FastAPI
-app = FastAPI(title="Karnak Gateway", version="0.1.0")
-
-# Configura logging básico
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gateway")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Gateway iniciado. Preparando conexões externas...")
+    yield
+    # Shutdown
+    logger.info("Gateway finalizando. Encerrando conexões...")
+
+app = FastAPI(title="Karnak Gateway", version="0.1.0", lifespan=lifespan)
 
 @app.get("/")
 def root():
@@ -15,13 +22,3 @@ def root():
 @app.get("/health")
 def healthcheck():
     return {"status": "ok"}
-
-# 🔜 Aqui no futuro você pode adicionar integração com NATS, Kafka, etc.
-# Exemplo de placeholder:
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Gateway iniciado. Preparando conexões externas...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Gateway finalizando. Encerrando conexões...")
